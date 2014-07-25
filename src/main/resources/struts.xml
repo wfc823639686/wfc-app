@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+        "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+    <!-- 将action托管给spring -->
+    <constant name="struts.objectFactory" value="spring"></constant>
+    <constant name="struts.devMode" value="true" />
+    <constant name="struts.enable.DynamicMethodInvocation" value="false"/>
+    <!-- 所有的action都应该放在对应的package下 -->
+    <package name="home" namespace="/home" extends="json-default">
+        <!-- 定义一个拦截器 -->
+        <interceptors>
+            <interceptor name="authority"
+                         class="com.wfc.app.interceptor.LoginInterceptor">
+                <param name="excludeMethods">login,addUser,list</param>
+            </interceptor>
+            <interceptor name="resetEmpty"
+                         class="com.wfc.app.interceptor.ResetEmptyInterceptor">
+            </interceptor>
+            <!-- 拦截器栈 -->
+            <interceptor-stack name="my-default">
+                <interceptor-ref name="defaultStack" />
+                <interceptor-ref name="authority" />
+                <interceptor-ref name="resetEmpty" />
+            </interceptor-stack>
+        </interceptors>
+        <default-interceptor-ref name="my-default"/>
+        <!-- 定义全局Result -->
+        <global-results>
+            <!-- 当返回login视图名时，转入/login.jsp页面 -->
+            <result name="login">/home/login.jsp</result>
+        </global-results>
+        <action name="user_*" class="userAction" method="{1}">
+            <result type="json" name="json_result">
+                <param name="root">jsonResult</param>
+            </result>
+            <result name="input">login</result>
+        </action>
+        <action name="section_*" class="sectionAction" method="{1}">
+            <result type="json" name="json_result">
+                <param name="root">jsonResult</param>
+            </result>
+        </action>
+    </package>
+</struts>

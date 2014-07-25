@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <context:annotation-config/>
+    <context:component-scan base-package="com.wfc.app"/>
+    <!--创建jdbc数据源 -->
+    <bean id="dataSource"  class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName">
+            <value>org.gjt.mm.mysql.Driver</value>
+        </property>
+        <property name="url">
+            <value>jdbc:mysql://localhost:3306/wfc?useUnicode=true&amp;characterEncoding=UTF-8</value>
+        </property>
+        <property name="username">
+            <value>root</value>
+        </property>
+    </bean>
+
+    <!-- ================================事务相关控制=================================================  -->
+    <bean name="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!--
+    <aop:config>
+        <aop:pointcut id="pc" expression="execution(public * com.wfc.app.service.*.*(..))" />
+        <aop:advisor pointcut-ref="pc" advice-ref="userTxAdvice" />
+    </aop:config>
+    -->
+
+    <tx:advice id="userTxAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="del*" propagation="REQUIRED" read-only="false"
+                       rollback-for="java.lang.Exception" no-rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="add*" propagation="REQUIRED" read-only="false"
+                       rollback-for="java.lang.RuntimeException" />
+            <tx:method name="update*" propagation="REQUIRED" read-only="false"
+                       rollback-for="java.lang.Exception" />
+
+            <tx:method name="find*" propagation="SUPPORTS"/>
+            <tx:method name="query*" propagation="SUPPORTS"/>
+            <tx:method name="get*" propagation="SUPPORTS"/>
+            <tx:method name="select*" propagation="SUPPORTS"/>
+        </tx:attributes>
+    </tx:advice>
+
+
+
+        <!-- 创建SqlSessionFactory，同时指定数据源-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <!-- 指定sqlMapConfig总配置文件，订制的environment在spring容器中不在生效-->
+         <property  name="configLocation"  value="classpath:MyBatis-Configuration.xml"/>
+        <!--指定实体类映射文件，可以指定同时指定某一包以及子包下面的所有配置文件，
+        mapperLocations和configLocation有一个即可，当需要为实体类指定别名时，
+        可指定configLocation属性，再在mybatis总配置文件中采用mapper引入实体类映射文件 -->
+        <property  name="mapperLocations"  value="classpath*:mappers/*.xml"/>
+    </bean>
+
+    <!--创建数据映射器，数据映射器必须为接口-->
+    <!--
+        Account
+    -->
+    <bean id="userMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="com.wfc.app.dao.UserMapper" />
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+
+    <!--
+        Section
+    -->
+    <bean id="sectionMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="com.wfc.app.dao.SectionMapper" />
+        <property name="sqlSessionFactory" ref="sqlSessionFactory" />
+    </bean>
+
+</beans>
